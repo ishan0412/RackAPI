@@ -25,4 +25,11 @@ app.MapPost("/products", async (IProductService productService, Product product)
     return Results.Created($"/products/{createdProduct?.Id}", createdProduct);
 });
 
+// DELETE a product from the database by its ID:
+app.MapDelete("/products/{id:int}", async (IProductService productService, int id) =>
+{
+    var deleteWasSuccessful = await productService.DeleteProductAsync(id);
+    return deleteWasSuccessful ? Results.NoContent() : Results.NotFound();
+});
+
 app.Run();

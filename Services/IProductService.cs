@@ -22,4 +22,13 @@ public interface IProductService
     /// The created <c>Product</c> entity, or <c>null</c> if adding it failed.
     /// </returns>
     Task<Product?> CreateProductAsync(Product product);
+
+    /// <summary>
+    /// Asynchronously deletes a product from the database by its ID.
+    /// </summary>
+    /// <param name="id">the ID of the product to delete</param>
+    /// <returns>
+    /// A boolean for if the deletion was successful or not.
+    /// </returns>
+    Task<bool> DeleteProductAsync(int id);
 }
