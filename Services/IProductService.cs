@@ -31,4 +31,14 @@ public interface IProductService
     /// A boolean for if the deletion was successful or not.
     /// </returns>
     Task<bool> DeleteProductAsync(int id);
+
+    /// <summary>
+    /// Asynchronously updates an existing product in the database by its ID.
+    /// </summary>
+    /// <param name="id">the ID of the product to update</param>
+    /// <param name="product">the updated properties of that product</param>
+    /// <returns>
+    /// The updated <c>Product</c> entity, or <c>null</c> if the update failed.
+    /// </returns>
+    Task<Product?> UpdateProductAsync(int id, Product product);
 }

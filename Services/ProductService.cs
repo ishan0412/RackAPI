@@ -41,7 +41,7 @@ public class ProductService : IProductService
         await _context.SaveChangesAsync();
         return product;
     }
-    
+
     public async Task<bool> DeleteProductAsync(int id)
     {
         var product = await _context.Products.FindAsync(id);
@@ -49,8 +49,27 @@ public class ProductService : IProductService
         {
             return false;
         }
+
         _context.Products.Remove(product);
         await _context.SaveChangesAsync();
         return true;
+    }
+    
+    public async Task<Product?> UpdateProductAsync(int id, Product product)
+    {
+        var existingProduct = await _context.Products.FindAsync(id);
+        if (existingProduct == null)
+        {
+            return null;
+        }
+
+        existingProduct.Name = product.Name;
+        existingProduct.Url = product.Url;
+        existingProduct.Price = product.Price;
+        existingProduct.BeforeSalePrice = product.BeforeSalePrice;
+        existingProduct.Vendor = product.Vendor;
+
+        await _context.SaveChangesAsync();
+        return existingProduct;
     }
 }

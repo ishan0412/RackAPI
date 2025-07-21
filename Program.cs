@@ -32,4 +32,11 @@ app.MapDelete("/products/{id:int}", async (IProductService productService, int i
     return deleteWasSuccessful ? Results.NoContent() : Results.NotFound();
 });
 
+// PUT an updated product in the database by its ID:
+app.MapPut("/products/{id:int}", async (IProductService productService, int id, Product product) =>
+{
+    var updatedProduct = await productService.UpdateProductAsync(id, product);
+    return updatedProduct != null ? Results.Ok(updatedProduct) : Results.NotFound();
+});
+
 app.Run();
