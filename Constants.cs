@@ -1,0 +1,12 @@
+namespace RackApi.Constants;
+
+public static class Constants
+{
+    public static class Swagger
+    {
+        public const string TITLE = "Rack API";
+        public const string VERSION = "v1";
+        public const string DESCRIPTION = "API for managing products in a rack.";
+        public const string ENDPOINT = $"/swagger/{VERSION}/swagger.json";
+    }
+}
