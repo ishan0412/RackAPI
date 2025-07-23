@@ -19,9 +19,9 @@ public interface IProductService
     /// </summary>
     /// <param name="product">the product to enter into the database</param>
     /// <returns>
-    /// The created <c>Product</c> entity, or <c>null</c> if adding it failed.
+    /// The created <c>Product</c> entity.
     /// </returns>
-    Task<Product?> CreateProductAsync(Product product);
+    Task<Product> CreateProductAsync(Product product);
 
     /// <summary>
     /// Asynchronously deletes a product from the database by its ID.

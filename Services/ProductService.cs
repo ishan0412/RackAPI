@@ -1,5 +1,7 @@
 using RackApi.Data;
 using RackApi.Models;
+using RackApi.Exceptions;
+using RackApi.Constants;
 using Microsoft.EntityFrameworkCore;
 
 /// <summary>
@@ -35,10 +37,33 @@ public class ProductService : IProductService
         return await _context.Products.ToListAsync();
     }
 
-    public async Task<Product?> CreateProductAsync(Product product)
+    public async Task<Product> CreateProductAsync(Product product)
     {
+        // Validate that all required fields are present and not null:
+        foreach (string fieldName in Constants.Database.NON_NULLABLE_FIELDS)
+        {
+            if (product.GetType().GetProperty(fieldName)?.GetValue(product) is null)
+            {
+                throw new NullFieldValueException(fieldName);
+            }
+        }
+        // If there already exists a product with the same name and URL, throw an exception:
+        if (await _context.Products.AnyAsync(p => (p.Name == product.Name) && (p.Url == product.Url)))
+        {
+            throw new DuplicateRecordException(product.Name, product.Url);
+        }
+
         _context.Products.Add(product);
-        await _context.SaveChangesAsync();
+        try
+        {
+            await _context.SaveChangesAsync();
+        } catch (Exception ex) when (
+            ex is DbUpdateException
+            || ex is DbUpdateConcurrencyException
+            || ex is OperationCanceledException)
+        {
+            throw new CommonDatabaseException(ex);
+        }
         return product;
     }
 
