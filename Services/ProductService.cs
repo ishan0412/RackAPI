@@ -64,14 +64,15 @@ public class ProductService : IProductService
 
     public async Task<bool> DeleteProductAsync(int id)
     {
-        var product = await _context.Products.FindAsync(id);
-        if (product == null)
+        // If the product record with the given ID does not exist, return false:
+        Product? productToDelete = await WrapAsyncDbOperation(async () => await _context.Products.FindAsync(id));
+        if (productToDelete == null)
         {
             return false;
         }
 
-        _context.Products.Remove(product);
-        await _context.SaveChangesAsync();
+        _context.Products.Remove(productToDelete);
+        await WrapAsyncDbOperation(() => _context.SaveChangesAsync());
         return true;
     }
 

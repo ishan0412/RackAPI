@@ -97,8 +97,17 @@ app.MapDelete(
     "/products/{id:int}",
     async (IProductService productService, int id) =>
     {
-        var deleteWasSuccessful = await productService.DeleteProductAsync(id);
-        return deleteWasSuccessful ? Results.NoContent() : Results.NotFound();
+        // Atempt deleting the product with the given ID from the database.
+        // If the record with that ID does not exist, return a 404 Not Found.
+        // For any other database-related exceptions, return a 500 Internal Server Error.
+        return await WrapAsyncServiceActionAndResult(async () =>
+        {
+            if (!await productService.DeleteProductAsync(id))
+            {
+                throw new RecordNotFoundException(id);
+            }
+            return Results.NoContent();
+        });
     }
 );
 
