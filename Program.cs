@@ -95,7 +95,7 @@ app.MapPost(
 // DELETE a product from the database by its ID:
 app.MapDelete(
     "/products/{id:int}",
-    async (IProductService productService, int id) =>
+    async (int id, IProductService productService) =>
     {
         // Atempt deleting the product with the given ID from the database.
         // If the record with that ID does not exist, return a 404 Not Found.
@@ -114,10 +114,23 @@ app.MapDelete(
 // PUT an updated product in the database by its ID:
 app.MapPut(
     "/products/{id:int}",
-    async (IProductService productService, int id, Product product) =>
+    async (ProductDto productDto, int id, IProductService productService) =>
     {
-        var updatedProduct = await productService.UpdateProductAsync(id, product);
-        return updatedProduct != null ? Results.Ok(updatedProduct) : Results.NotFound();
+        // Map the DTO to the Product model:
+        Product product = MapDtoToProduct(productDto);
+        // Attempt updating the product with the given ID in the database.
+        // If the record with that ID does not exist, return a 404 Not Found.
+        // If a required field's value is null, return a 400 Bad Request.
+        // For any other database-related exceptions, return a 500 Internal Server Error.
+        return await WrapAsyncServiceActionAndResult(async () =>
+        {
+            Product? updatedProduct = await productService.UpdateProductAsync(id, product);
+            if (updatedProduct is null)
+            {
+                throw new RecordNotFoundException(id);
+            }
+            return Results.Ok(updatedProduct);
+        });
     }
 );
 

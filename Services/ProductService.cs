@@ -41,13 +41,7 @@ public class ProductService : IProductService
     public async Task<Product> CreateProductAsync(Product product)
     {
         // Validate that all required fields are present and not null:
-        foreach (string fieldName in Constants.Database.NON_NULLABLE_FIELDS)
-        {
-            if (product.GetType().GetProperty(fieldName)?.GetValue(product) is null)
-            {
-                throw new NullFieldValueException(fieldName);
-            }
-        }
+        ThrowExceptionIfRequiredFieldIsNull(product);
         // If there already exists a product with the same name and URL, throw an exception:
         bool isDuplicate = await WrapAsyncDbOperation(() =>
             _context.Products.AnyAsync(p => (p.Name == product.Name) && (p.Url == product.Url))
@@ -65,8 +59,10 @@ public class ProductService : IProductService
     public async Task<bool> DeleteProductAsync(int id)
     {
         // If the product record with the given ID does not exist, return false:
-        Product? productToDelete = await WrapAsyncDbOperation(async () => await _context.Products.FindAsync(id));
-        if (productToDelete == null)
+        Product? productToDelete = await WrapAsyncDbOperation(async () =>
+            await _context.Products.FindAsync(id)
+        );
+        if (productToDelete is null)
         {
             return false;
         }
@@ -78,19 +74,24 @@ public class ProductService : IProductService
 
     public async Task<Product?> UpdateProductAsync(int id, Product product)
     {
-        var existingProduct = await _context.Products.FindAsync(id);
-        if (existingProduct == null)
+        // Validate that all required fields are present and not null:
+        ThrowExceptionIfRequiredFieldIsNull(product);
+        // If the product record with the given ID does not exist, return null:
+        Product? productToUpdate = await WrapAsyncDbOperation(async () =>
+            await _context.Products.FindAsync(id)
+        );
+        if (productToUpdate is null)
         {
             return null;
         }
 
-        existingProduct.Name = product.Name;
-        existingProduct.Url = product.Url;
-        existingProduct.Price = product.Price;
-        existingProduct.BeforeSalePrice = product.BeforeSalePrice;
-        existingProduct.Vendor = product.Vendor;
+        productToUpdate.Name = product.Name;
+        productToUpdate.Url = product.Url;
+        productToUpdate.Price = product.Price;
+        productToUpdate.BeforeSalePrice = product.BeforeSalePrice;
+        productToUpdate.Vendor = product.Vendor;
 
-        await _context.SaveChangesAsync();
-        return existingProduct;
+        await WrapAsyncDbOperation(() => _context.SaveChangesAsync());
+        return productToUpdate;
     }
 }
