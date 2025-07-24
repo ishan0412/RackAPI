@@ -35,7 +35,7 @@ public class ProductService : IProductService
 
     public async Task<IEnumerable<Product>> GetAllProductsAsync()
     {
-        return await _context.Products.ToListAsync();
+        return await WrapAsyncDbOperation(() => _context.Products.ToListAsync());
     }
 
     public async Task<Product> CreateProductAsync(Product product)

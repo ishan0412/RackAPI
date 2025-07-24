@@ -64,7 +64,13 @@ app.Use(
 // GET all products in the database:
 app.MapGet(
     "/products",
-    async (IProductService productService) => await productService.GetAllProductsAsync()
+    async (IProductService productService) =>
+    {
+        // Return a 500 Internal Server Error for any database-related exception.
+        return await WrapAsyncServiceActionAndResult(async () =>
+            Results.Ok(await productService.GetAllProductsAsync())
+        );
+    }
 );
 
 // POST a new product to the database:
