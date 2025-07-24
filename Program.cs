@@ -1,6 +1,7 @@
 using RackApi.Models;
 using RackApi.Constants;
 using RackApi.Exceptions;
+using RackApi.Dto;
 using System.Net.Mime;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -55,8 +56,19 @@ app.MapGet("/products", async (IProductService productService) =>
 );
 
 // POST a new product to the database:
-app.MapPost("/products", async (IProductService productService, Product product) =>
+app.MapPost("/products", async (ProductDto productDto, IProductService productService) =>
 {
+    // Map the DTO to the Product model:
+    Product product = new Product
+    {
+        Name = productDto.Name,
+        Url = productDto.Url,
+        Vendor = productDto.Vendor,
+        Price = productDto.Price,
+        BeforeSalePrice = productDto.BeforeSalePrice
+    };
+
+    // Attempt adding the product to the database:
     Product createdProduct;
     try
     {

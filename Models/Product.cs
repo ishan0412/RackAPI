@@ -8,7 +8,7 @@ public class Product
     /// <summary>
     /// Unique identifier for the product.
     /// </summary>
-    required public int Id { get; set; }
+    public int Id { get; set; }
 
     /// <summary>
     /// The product's name.
