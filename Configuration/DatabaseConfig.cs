@@ -17,14 +17,17 @@ public static class DatabaseConfig
     /// the input <paramref name="services"/> with a <c>DbContext</c> registered for accessing the database
     /// </returns>
     /// <exception cref="InvalidOperationException">if no value for <c>DefaultConnection</c> has yet been set</exception>
-    public static IServiceCollection AddDatabaseConnection(this IServiceCollection services, IConfiguration configuration)
+    public static IServiceCollection AddDatabaseConnection(
+        this IServiceCollection services,
+        IConfiguration configuration
+    )
     {
-        var connectionString = configuration.GetConnectionString("DefaultConnection")
+        var connectionString =
+            configuration.GetConnectionString("DefaultConnection")
             ?? throw new InvalidOperationException("Database connection string not found.");
-            
+
         // Register the ProductDbContext with PostgreSQL:
-        services.AddDbContext<ProductDbContext>(options =>
-            options.UseNpgsql(connectionString));
+        services.AddDbContext<ProductDbContext>(options => options.UseNpgsql(connectionString));
 
         return services;
     }

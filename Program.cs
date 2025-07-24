@@ -1,116 +1,109 @@
-using RackApi.Models;
-using RackApi.Constants;
-using RackApi.Exceptions;
-using RackApi.Dto;
 using System.Net.Mime;
+using RackApi.Constants;
+using RackApi.Dto;
+using RackApi.Exceptions;
+using RackApi.Models;
+using static RackApi.Helpers.ProgramHelper;
 
 var builder = WebApplication.CreateBuilder(args);
+
 // Registers EFCore's DbContext with PostgreSQL, and opens a connection to the product database:
 builder.Services.AddDatabaseConnection(builder.Configuration);
+
 // Registers Swagger documentation:
 builder.Services.AddSwaggerDocumentation();
+
 // Registers the ProductService to access the database with:
 builder.Services.AddScoped<IProductService, ProductService>();
 
 var app = builder.Build();
+
 // Enables Swagger documentation and UI:
 app.UseSwaggerDocumentation();
+
 // Returns user-defined errors over ASP.NET's BadHttpRequestExceptions:
-app.Use(async (context, next) =>
-{
-    try
+app.Use(
+    async (context, next) =>
     {
-        await next();
+        try
+        {
+            await next();
+        }
+        catch (BadHttpRequestException ex)
+        {
+            context.Response.ContentType = MediaTypeNames.Application.Json;
+            Exception baseException = ex.GetBaseException();
+            CommonApiException exceptionToReturn;
+            if (baseException is InvalidOperationException)
+            {
+                exceptionToReturn = new InvalidFieldValueTypeException();
+            }
+            else if (
+                (baseException is System.Text.Json.JsonException)
+                && (
+                    baseException.GetType().ToString()
+                    != Constants.UnimportedExceptionTypes.JSON_READER_EXCEPTION
+                )
+            )
+            {
+                exceptionToReturn = new MissingRequiredFieldException();
+            }
+            else
+            {
+                throw;
+            }
+            context.Response.StatusCode = exceptionToReturn.HttpStatusCode;
+            await context.Response.WriteAsJsonAsync(
+                new { Error = exceptionToReturn.GetType().Name, exceptionToReturn.Message }
+            );
+        }
     }
-    catch (BadHttpRequestException ex)
-    {
-        context.Response.ContentType = MediaTypeNames.Application.Json;
-        Exception baseException = ex.GetBaseException();
-        CommonApiException exceptionToReturn;
-        if (baseException is InvalidOperationException)
-        {
-            exceptionToReturn = new InvalidFieldValueTypeException();
-        }
-        else if ((baseException is System.Text.Json.JsonException)
-        && (baseException.GetType().ToString() != Constants.UnimportedExceptionTypes.JSON_READER_EXCEPTION))
-        {
-            exceptionToReturn = new MissingRequiredFieldException();
-        }
-        else
-        {
-            throw;
-        }
-        context.Response.StatusCode = exceptionToReturn.HttpStatusCode;
-        await context.Response.WriteAsJsonAsync(new
-        {
-            Error = exceptionToReturn.GetType().Name,
-            exceptionToReturn.Message,
-        });
-    }
-});
+);
 
 // API endpoints:
 // GET all products in the database:
-app.MapGet("/products", async (IProductService productService) =>
-    await productService.GetAllProductsAsync()
+app.MapGet(
+    "/products",
+    async (IProductService productService) => await productService.GetAllProductsAsync()
 );
 
 // POST a new product to the database:
-app.MapPost("/products", async (ProductDto productDto, IProductService productService) =>
-{
-    // Map the DTO to the Product model:
-    Product product = new Product
+app.MapPost(
+    "/products",
+    async (ProductDto productDto, IProductService productService) =>
     {
-        Name = productDto.Name,
-        Url = productDto.Url,
-        Vendor = productDto.Vendor,
-        Price = productDto.Price,
-        BeforeSalePrice = productDto.BeforeSalePrice
-    };
-
-    // Attempt adding the product to the database:
-    Product createdProduct;
-    try
-    {
-        createdProduct = await productService.CreateProductAsync(product);
-    }
-    // If a product with the same name and URL already exists, return a 403 Forbidden.
-    // If a required field's value is null, return a 400 Bad Request.
-    // For any other database-related exceptions, return a 500 Internal Server Error.
-    catch (CommonApiException ex)
-    {
-        string errorName = ex.GetType().Name;
-        string errorMessage = ex.Message;
-        return Results.Json((ex is CommonDatabaseException) ?
-        new
+        // Map the DTO to the Product model:
+        Product product = MapDtoToProduct(productDto);
+        // Attempt adding the product to the database.
+        // If a product with the same name and URL already exists, return a 403 Forbidden.
+        // If a required field's value is null, return a 400 Bad Request.
+        // For any other database-related exceptions, return a 500 Internal Server Error.
+        return await WrapAsyncServiceActionAndResult(async () =>
         {
-            Error = errorName,
-            InnerExceptionType = ex.InnerException?.GetType().Name,
-            InnerExceptionMessage = ex.InnerException?.Message,
-            errorMessage,
-        } :
-        new
-        {
-            Error = errorName,
-            errorMessage,
-        },
-        statusCode: ex.HttpStatusCode);
+            Product createdProduct = await productService.CreateProductAsync(product);
+            return Results.Created($"/products/{createdProduct.Id}", createdProduct);
+        });
     }
-    return Results.Created($"/products/{createdProduct?.Id}", createdProduct);
-});
+);
 
 // DELETE a product from the database by its ID:
-app.MapDelete("/products/{id:int}", async (IProductService productService, int id) =>
-{
-    var deleteWasSuccessful = await productService.DeleteProductAsync(id);
-    return deleteWasSuccessful ? Results.NoContent() : Results.NotFound();
-});
+app.MapDelete(
+    "/products/{id:int}",
+    async (IProductService productService, int id) =>
+    {
+        var deleteWasSuccessful = await productService.DeleteProductAsync(id);
+        return deleteWasSuccessful ? Results.NoContent() : Results.NotFound();
+    }
+);
 
 // PUT an updated product in the database by its ID:
-app.MapPut("/products/{id:int}", async (IProductService productService, int id, Product product) =>
-{
-    var updatedProduct = await productService.UpdateProductAsync(id, product);
-    return updatedProduct != null ? Results.Ok(updatedProduct) : Results.NotFound();
-});
+app.MapPut(
+    "/products/{id:int}",
+    async (IProductService productService, int id, Product product) =>
+    {
+        var updatedProduct = await productService.UpdateProductAsync(id, product);
+        return updatedProduct != null ? Results.Ok(updatedProduct) : Results.NotFound();
+    }
+);
 
 app.Run();

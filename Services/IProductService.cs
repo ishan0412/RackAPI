@@ -1,7 +1,7 @@
 using RackApi.Models;
 
 /// <summary>
-/// Abstraction of a service for managing clothing products, provisioning methods for accessing and manipulating product 
+/// Abstraction of a service for managing clothing products, provisioning methods for accessing and manipulating product
 /// data.
 /// </summary>
 public interface IProductService

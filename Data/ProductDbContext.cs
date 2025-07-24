@@ -7,9 +7,9 @@ namespace RackApi.Data;
 /// The <c>DbContext</c> for the database of clothing products this app queries, representing a session into it.
 /// </summary>
 public class ProductDbContext : DbContext
-{   
+{
     /// <summary>
-    /// Creates a new <c>ProductDbContext</c> instance with the given options, which are used to configure the database 
+    /// Creates a new <c>ProductDbContext</c> instance with the given options, which are used to configure the database
     /// connection.
     /// </summary>
     /// <param name="options">a <c>DbContextOptions</c> object defining the database provider and connection string</param>

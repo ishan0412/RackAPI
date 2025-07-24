@@ -34,7 +34,7 @@ public class Product
     /// The product's price before any discounts or sales, in US dollars.
     /// </summary>
     public double BeforeSalePrice { get; set; }
-    
+
     /// <summary>
     /// Checks if the product is currently on sale by comparing its price to its before-sale price.
     /// </summary>

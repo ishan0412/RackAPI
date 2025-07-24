@@ -1,8 +1,9 @@
-using RackApi.Data;
-using RackApi.Models;
-using RackApi.Exceptions;
-using RackApi.Constants;
 using Microsoft.EntityFrameworkCore;
+using RackApi.Constants;
+using RackApi.Data;
+using RackApi.Exceptions;
+using RackApi.Models;
+using static RackApi.Helpers.ProductServiceHelper;
 
 /// <summary>
 /// Accessor class for interacting with the clothing product database, to be attached to this app's service collection.
@@ -21,11 +22,11 @@ public class ProductService : IProductService
     private readonly ProductDbContext _context;
 
     /// <summary>
-    /// Creates a new <c>ProductService</c> instance with the given <c>ProductDbContext</c>, through which it can access 
+    /// Creates a new <c>ProductService</c> instance with the given <c>ProductDbContext</c>, through which it can access
     /// the database.
     /// </summary>
-    /// <param name="context">the <c>ProductDbContext</c> instance for the database, expected to already be registered 
-    /// with the app's services via the <see cref="RackApi.Configuration.DatabaseConfig.AddDatabaseConnection()"/> 
+    /// <param name="context">the <c>ProductDbContext</c> instance for the database, expected to already be registered
+    /// with the app's services via the <see cref="RackApi.Configuration.DatabaseConfig.AddDatabaseConnection()"/>
     /// method.</param>
     public ProductService(ProductDbContext context)
     {
@@ -48,22 +49,16 @@ public class ProductService : IProductService
             }
         }
         // If there already exists a product with the same name and URL, throw an exception:
-        if (await _context.Products.AnyAsync(p => (p.Name == product.Name) && (p.Url == product.Url)))
+        bool isDuplicate = await WrapAsyncDbOperation(() =>
+            _context.Products.AnyAsync(p => (p.Name == product.Name) && (p.Url == product.Url))
+        );
+        if (isDuplicate)
         {
             throw new DuplicateRecordException(product.Name, product.Url);
         }
 
         _context.Products.Add(product);
-        try
-        {
-            await _context.SaveChangesAsync();
-        } catch (Exception ex) when (
-            ex is DbUpdateException
-            || ex is DbUpdateConcurrencyException
-            || ex is OperationCanceledException)
-        {
-            throw new CommonDatabaseException(ex);
-        }
+        await WrapAsyncDbOperation(() => _context.SaveChangesAsync());
         return product;
     }
 
@@ -79,7 +74,7 @@ public class ProductService : IProductService
         await _context.SaveChangesAsync();
         return true;
     }
-    
+
     public async Task<Product?> UpdateProductAsync(int id, Product product)
     {
         var existingProduct = await _context.Products.FindAsync(id);
