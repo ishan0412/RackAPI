@@ -135,3 +135,5 @@ app.MapPut(
 );
 
 app.Run();
+
+public partial class Program { } // allows API entry point to be used in tests
