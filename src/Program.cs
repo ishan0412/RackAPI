@@ -42,7 +42,7 @@ app.Use(
                 (baseException is System.Text.Json.JsonException)
                 && (
                     baseException.GetType().ToString()
-                    != Constants.UnimportedExceptionTypes.JSON_READER_EXCEPTION
+                    != UnimportedExceptionTypes.JSON_READER_EXCEPTION
                 )
             )
             {
@@ -63,7 +63,7 @@ app.Use(
 // API endpoints:
 // GET all products in the database:
 app.MapGet(
-    "/products",
+    ApiPaths.PRODUCTS,
     async (IProductService productService) =>
     {
         // Return a 500 Internal Server Error for any database-related exception.
@@ -75,7 +75,7 @@ app.MapGet(
 
 // POST a new product to the database:
 app.MapPost(
-    "/products",
+    ApiPaths.PRODUCTS,
     async (ProductDto productDto, IProductService productService) =>
     {
         // Map the DTO to the Product model:
@@ -87,14 +87,17 @@ app.MapPost(
         return await WrapAsyncServiceActionAndResult(async () =>
         {
             Product createdProduct = await productService.CreateProductAsync(product);
-            return Results.Created($"/products/{createdProduct.Id}", createdProduct);
+            return Results.Created(
+                Path.Join(ApiPaths.PRODUCTS, createdProduct.Id.ToString()),
+                createdProduct
+            );
         });
     }
 );
 
 // DELETE a product from the database by its ID:
 app.MapDelete(
-    "/products/{id:int}",
+    ApiPaths.PRODUCT_BY_ID,
     async (int id, IProductService productService) =>
     {
         // Atempt deleting the product with the given ID from the database.
@@ -113,7 +116,7 @@ app.MapDelete(
 
 // PUT an updated product in the database by its ID:
 app.MapPut(
-    "/products/{id:int}",
+    ApiPaths.PRODUCT_BY_ID,
     async (ProductDto productDto, int id, IProductService productService) =>
     {
         // Map the DTO to the Product model:

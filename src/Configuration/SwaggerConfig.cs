@@ -21,12 +21,12 @@ public static class SwaggerConfig
         services.AddSwaggerGen(c =>
         {
             c.SwaggerDoc(
-                Constants.Swagger.VERSION,
+                ApiInfo.VERSION,
                 new OpenApiInfo
                 {
-                    Title = Constants.Swagger.TITLE,
-                    Description = Constants.Swagger.DESCRIPTION,
-                    Version = Constants.Swagger.VERSION,
+                    Title = ApiInfo.TITLE,
+                    Description = ApiInfo.DESCRIPTION,
+                    Version = ApiInfo.VERSION,
                 }
             );
         });
@@ -47,10 +47,7 @@ public static class SwaggerConfig
             app.UseSwagger();
             app.UseSwaggerUI(c =>
             {
-                c.SwaggerEndpoint(
-                    Constants.Swagger.ENDPOINT,
-                    $"{Constants.Swagger.TITLE} {Constants.Swagger.VERSION}"
-                );
+                c.SwaggerEndpoint(ApiInfo.ENDPOINT, $"{ApiInfo.TITLE} {ApiInfo.VERSION}");
             });
         }
         return app;
